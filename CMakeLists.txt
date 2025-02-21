@@ -7,7 +7,8 @@ add_executable(text-editor
 	src/macos/main.m
 	src/macos/AppDelegate.m
 	src/macos/MetalView.m
-	src/macos/MetalRenderer.m)
+	src/macos/MetalRenderer.m
+	src/macos/MetalProfiler.m)
 target_link_libraries(text-editor "-framework CoreFoundation")
 target_link_libraries(text-editor "-framework Cocoa")
 target_link_libraries(text-editor "-framework AppKit")

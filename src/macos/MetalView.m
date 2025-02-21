@@ -8,17 +8,21 @@
 	if (self) {
 		_renderer = [[MetalRenderer alloc] initWithMetalKitView:mtkView];
 		[_renderer setViewportSize:mtkView.bounds.size];
+
+		_profiler = [[MetalProfiler alloc] init];
 		NSLog(@"MetalViewDel init %@", _renderer);
 	}
 	return self;
 }
 - (void)drawInMTKView:(MTKView *)view {
+	// [_profiler startCapture:@"" device:view.device];
 	[_renderer renderToView:view];
+	// [_profiler stopCapture];
+	// for(;;);
 }
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
 	[_renderer setViewportSize:size];
 }
-
 @end
 
 @implementation MetalView {
@@ -31,7 +35,8 @@
 	[self setupDisplayLink];
 	self.wantsLayer = YES;
 	self.device = MTLCreateSystemDefaultDevice();
-	delegate = [[MetalViewDelegate alloc] init:self]; 
+	self.drawableSize = CGSizeMake(self.bounds.size.width, self.bounds.size.height);
+	delegate = [[MetalViewDelegate alloc] init:self];
 	[self setDelegate:delegate];
 
 	NSLog(@"MetalView: InitWithFrame");

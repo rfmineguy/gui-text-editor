@@ -44,8 +44,7 @@
 - (void)renderToView:(nonnull MTKView *)view {
 	NSLog(@"DrawInMTKView");
 
-	static const Vertex triangleVertices[] =
-	{
+	static const Vertex triangleVertices[] = {
 			// 2D positions,    RGBA colors
 			{ {  250,  -250 }, { 1, 0, 0, 1 } },
 			{ { -250,  -250 }, { 0, 1, 0, 1 } },

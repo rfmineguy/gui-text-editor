@@ -5,21 +5,25 @@
 	return YES;
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+	NSLog(@"App finished launching");
 	[self setupMenu];
 
-	NSRect frame = NSMakeRect(0,0,300,300);
+	NSRect frame = NSMakeRect(0,0,600,600);
 	_window = [[NSWindow alloc]
-		initWithContentRect:frame styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable backing:NSBackingStoreBuffered defer:NO
+		initWithContentRect:frame styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskResizable backing:NSBackingStoreBuffered defer:NO
 	];
-	_device = MTLCreateSystemDefaultDevice(); 
-	_view = [[MTKView alloc] initWithFrame:frame device:_device];
+	_view = [[MetalView alloc] initWithFrame:frame];
+	[_view setEnableSetNeedsDisplay: NO];
+	[_view setPreferredFramesPerSecond: 60];
+	NSLog(@"Setup view");
 
 	[_window setTitle: @"Metal Window"];
 	[_window setBackgroundColor:[NSColor blueColor]];
 	[_window makeKeyAndOrderFront:nil];
 	[_window setContentView:_view];
-	[_window setDelegate:self];
-	[_window setLevel:NSFloatingWindowLevel];
+	[_window setLevel:NSNormalWindowLevel];
+
+	NSLog(@"Finish launch");
 }
 
 - (void)setupMenu {
@@ -40,9 +44,11 @@
 	[item setSubmenu:appMenu];
 
 	[NSApp setMainMenu:menu];
+	NSLog(@"Finish setupMenu");
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
+	NSLog(@"Window close");
 	[NSApp terminate:nil];
 }
 

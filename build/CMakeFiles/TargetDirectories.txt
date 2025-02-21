@@ -1,0 +1,4 @@
+/Users/rileyfischer/Documents/dev/text-editor/build/CMakeFiles/text-editor.dir
+/Users/rileyfischer/Documents/dev/text-editor/build/CMakeFiles/compile_shaders.dir
+/Users/rileyfischer/Documents/dev/text-editor/build/CMakeFiles/edit_cache.dir
+/Users/rileyfischer/Documents/dev/text-editor/build/CMakeFiles/rebuild_cache.dir

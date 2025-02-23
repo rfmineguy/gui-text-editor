@@ -22,6 +22,7 @@
 	[_window makeKeyAndOrderFront:nil];
 	[_window setContentView:_view];
 	[_window setLevel:NSNormalWindowLevel];
+	[_window setAcceptsMouseMovedEvents:YES];
 
 	NSLog(@"Finish launch");
 }
@@ -57,6 +58,12 @@
 }
 
 - (void)mouseMoved:(NSEvent *)event {
+	NSLog(@"MouseMoved");
+	[_view setMousePos: [event locationInWindow]];
+}
+
+- (void)keyDown:(NSEvent *)event {
+	NSLog(@"Key down");
 }
 
 @end

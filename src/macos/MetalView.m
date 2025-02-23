@@ -8,7 +8,7 @@
 	if (self) {
 		_renderer = [[MetalRenderer alloc] initWithMetalKitView:mtkView];
 		[_renderer setViewportSize:mtkView.bounds.size];
-
+		_ui = [[TextEditorUI alloc] init];
 		_profiler = [[MetalProfiler alloc] init];
 		NSLog(@"MetalViewDel init %@", _renderer);
 	}
@@ -20,7 +20,8 @@
 }
 - (void)drawInMTKView:(MTKView *)view {
 	// [_profiler startCapture:view.device];
-	[_renderer renderToView:view];
+	[_ui renderToView:_renderer mtkView:view];
+	// [_renderer renderToView:view];
 	// [_profiler stopCapture];
 	// for(;;);
 }
@@ -56,6 +57,10 @@
 
 - (void)render {
 	// [_renderer drawInMTKView: self];
+}
+
+- (void)setMousePos:(NSPoint)mousePos {
+	self.mousePos = mousePos;
 }
 
 @end

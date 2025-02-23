@@ -9,6 +9,7 @@ add_executable(text-editor
 	src/macos/MetalView.m
 	src/macos/MetalRenderer.m
 	src/macos/MetalProfiler.m
+	src/macos/UI.m
 	src/macos/LinearAlg.m)
 target_link_libraries(text-editor "-framework CoreFoundation")
 target_link_libraries(text-editor "-framework Cocoa")
@@ -21,8 +22,9 @@ message("${CMAKE_SOURCE_DIR}")
 set(METAL_FLAGS -frecord-sources -gline-tables-only -I${CMAKE_SOURCE_DIR}/src/macos/)
 add_custom_command(
     OUTPUT default.metallib
-    COMMAND xcrun -sdk macosx metal ${METAL_FLAGS} -o 01.ir -c "${CMAKE_SOURCE_DIR}/res/shaders/01.metal"
-    COMMAND xcrun -sdk macosx metallib -o default.metallib 01.ir
+    COMMAND xcrun -sdk macosx metal ${METAL_FLAGS} -o squircle.ir -c "${CMAKE_SOURCE_DIR}/res/shaders/squircle.metal"
+    COMMAND xcrun -sdk macosx metal ${METAL_FLAGS} -o quad.ir -c "${CMAKE_SOURCE_DIR}/res/shaders/quad.metal"
+    COMMAND xcrun -sdk macosx metallib -o default.metallib squircle.ir quad.ir
     DEPENDS ${SHADERS}
 )
 

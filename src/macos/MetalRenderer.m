@@ -6,7 +6,9 @@
 @implementation MetalRenderer {
 	id<MTLDevice> _device;
 	id<MTLRenderPipelineState> _quadPipelineState, _squirclePipelineState;
+	id<MTLCommandBuffer> _commandBuffer;
 	id<MTLCommandQueue> _commandQueue;
+	id<MTLRenderCommandEncoder> _commandEncoder;
 
 	vector_uint2 _viewportSize;
 
@@ -96,40 +98,26 @@
 	_commandQueue = [_device newCommandQueue];
 }
 
-- (void)renderToView:(nonnull MTKView *)view {
-	t += 0.01;
+- (void)begin:(nonnull MTKView*)view {
+	_commandBuffer = [_commandQueue commandBuffer];
+	_commandBuffer.label = @"CmdBuf";
 
-	// Create a new command buffer for each render pass to the current drawable.
-	id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
-	commandBuffer.label = @"MyCommand";
-
-	// Obtain a renderPassDescriptor generated from the view's drawable textures.
-	MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
-
-	if(renderPassDescriptor != nil)
-	{
-		// Create a render command encoder.
-		id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-		renderEncoder.label = @"MyRenderEncoder";
-
-		n = 1.7 + sin(t);
-		NSPoint m = [NSEvent mouseLocation];
-		[self renderQuad:    view enc:renderEncoder x:100 y:100 sx:100 sy:100 angle:M_PI_2];
-		[self renderQuad:    view enc:renderEncoder x:150 y:100 sx:100 sy:100 angle:M_PI_4];
-		[self renderQuad:    view enc:renderEncoder x:200 y:100 sx:100 sy:100 angle:M_PI_2];
-		[self renderQuad:    view enc:renderEncoder x:m.x y:m.y sx:100 sy:100 angle:M_PI_4];
-		[self renderSquircle:view enc:renderEncoder x:400 y:100 sx:100 sy:100 angle:M_PI_4 n:n];
-
-		// Schedule a present once the framebuffer is complete using the current drawable.
-		[commandBuffer presentDrawable:view.currentDrawable];
-		[renderEncoder endEncoding];
+	if (view.currentRenderPassDescriptor == nil) {
+		[self end:view];
+		return;
 	}
 
-	// Finalize rendering here & push the command buffer to the GPU.
-	[commandBuffer commit];
+	_commandEncoder = [_commandBuffer renderCommandEncoderWithDescriptor:view.currentRenderPassDescriptor];
+}
+- (void)end:(nonnull MTKView*)view {
+	if (view.currentRenderPassDescriptor == nil) return;
+
+	[_commandBuffer presentDrawable:view.currentDrawable];
+	[_commandEncoder endEncoding];
+	[_commandBuffer commit];
 }
 
-- (void)renderQuad:(nonnull MTKView *)view enc:(nonnull id<MTLRenderCommandEncoder>)renderEncoder x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle {
+- (void)renderQuad:(nonnull MTKView *)view x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle {
 	Uniforms u = {
 		.size = {sx,sy},
 		.model = modelMat(x, y, sx * view.window.backingScaleFactor, sy * view.window.backingScaleFactor, angle),
@@ -138,15 +126,15 @@
 	id<MTLBuffer> unifBuffer = [_device newBufferWithBytes:&u length:sizeof(Uniforms) options:MTLResourceStorageModeShared];
 	unifBuffer.label = @"UnifBuf";
 
-	[renderEncoder setRenderPipelineState:_quadPipelineState];
-	[renderEncoder setVertexBuffer:_quadVertexBuffer offset:0 atIndex:0];
-	[renderEncoder setVertexBuffer:unifBuffer        offset:0 atIndex:1];
+	[_commandEncoder setRenderPipelineState:_quadPipelineState];
+	[_commandEncoder setVertexBuffer:_quadVertexBuffer offset:0 atIndex:0];
+	[_commandEncoder setVertexBuffer:unifBuffer        offset:0 atIndex:1];
 
-	[renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle 
+	[_commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle 
 														indexCount:6 indexType:MTLIndexTypeUInt32 indexBuffer:_quadIndexBuffer indexBufferOffset:0];
 }
 
-- (void)renderSquircle:(nonnull MTKView*)view enc:(nonnull id<MTLRenderCommandEncoder>)encoder x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle n:(float)n_ {
+- (void)renderSquircle:(nonnull MTKView*)view x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle n:(float)n_ {
 	SquircleUniforms u = {
 		.uniforms = {
 			.size = {sx,sy},
@@ -158,11 +146,11 @@
 	id<MTLBuffer> unifBuffer = [_device newBufferWithBytes:&u length:sizeof(SquircleUniforms) options:MTLResourceStorageModeShared];
 	unifBuffer.label = @"UnifBuf";
 
-	[encoder setRenderPipelineState:_squirclePipelineState];
-	[encoder setVertexBuffer:_quadVertexBuffer offset:0 atIndex:0];
-	[encoder setVertexBuffer:unifBuffer 			 offset:0 atIndex:1];
+	[_commandEncoder setRenderPipelineState:_squirclePipelineState];
+	[_commandEncoder setVertexBuffer:_quadVertexBuffer offset:0 atIndex:0];
+	[_commandEncoder setVertexBuffer:unifBuffer 			 offset:0 atIndex:1];
 
-	[encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+	[_commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
 														indexCount:6 indexType:MTLIndexTypeUInt32 indexBuffer:_quadIndexBuffer indexBufferOffset:0];
 }
 

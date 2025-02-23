@@ -79,10 +79,10 @@
 		[commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
 		renderEncoder.label = @"MyRenderEncoder";
 
-		[self renderQuad:renderEncoder x:100 y:100 sx:50 sy:50 angle:M_PI_2];
-		[self renderQuad:renderEncoder x:150 y:100 sx:50 sy:50 angle:M_PI_4];
-		[self renderQuad:renderEncoder x:200 y:100 sx:50 sy:50 angle:M_PI_2];
-		[self renderQuad:renderEncoder x:250 y:100 sx:50 sy:50 angle:M_PI_4];
+		[self renderQuad:view enc:renderEncoder x:100 y:100 sx:50 sy:50 angle:M_PI_2];
+		[self renderQuad:view enc:renderEncoder x:150 y:100 sx:50 sy:50 angle:M_PI_4];
+		[self renderQuad:view enc:renderEncoder x:200 y:100 sx:50 sy:50 angle:M_PI_2];
+		[self renderQuad:view enc:renderEncoder x:250 y:100 sx:50 sy:50 angle:M_PI_4];
 
 		// Schedule a present once the framebuffer is complete using the current drawable.
 		[commandBuffer presentDrawable:view.currentDrawable];
@@ -93,8 +93,8 @@
 	[commandBuffer commit];
 }
 
-- (void)renderQuad:(nonnull id<MTLRenderCommandEncoder>)renderEncoder x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle {
-	Uniforms u = {.model = modelMat(x, y, sx, sy, angle), .projection = orthoProjMat(0, 600, 0, 600, 0, 1)};
+- (void)renderQuad:(nonnull MTKView *)view enc:(nonnull id<MTLRenderCommandEncoder>)renderEncoder x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle {
+	Uniforms u = {.model = modelMat(x, y, sx * view.window.backingScaleFactor, sy * view.window.backingScaleFactor, angle), .projection = orthoProjMat(0, _viewportSize.x, 0, _viewportSize.y, 0, 1)};
 	id<MTLBuffer> unifBuffer = [_device newBufferWithBytes:&u length:sizeof(Uniforms) options:MTLResourceStorageModeShared];
 	unifBuffer.label = @"UnifBuf";
 

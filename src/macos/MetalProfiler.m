@@ -16,7 +16,7 @@
 	}
 	return self;
 }
-- (void)startCapture:(nullable  NSString*)loc device:(nullable id<MTLDevice>)device {
+- (void)startCapture:(nullable id<MTLDevice>)device {
 	// Create a capture descriptor
 	NSFileManager *fm = [NSFileManager defaultManager];
 	NSArray *docsDirs = [fm URLsForDirectory:NSDocumentDirectory inDomains: NSUserDomainMask];
@@ -29,21 +29,22 @@
 	NSError *error = nil;
 
 	// Delete the file at the specified path
-	BOOL success = [fm removeItemAtPath:savePath error:&error];
+	NSLog(@"pURL: %@", pURL);
+	BOOL success = [fm removeItemAtURL:pURL error:&error];
 	if (success) {
-			NSLog(@"File deleted successfully.");
+		NSLog(@"File deleted successfully. %@, pURL: %@", savePath, pURL);
 	} else {
-			NSLog(@"No capture file to remove %@", error.localizedDescription);
+		NSLog(@"No capture file to remove %@", error.localizedDescription);
 	}
 
-	MTLCaptureManager *captureManager = [MTLCaptureManager sharedCaptureManager];
-	if ([captureManager supportsDestination:MTLCaptureDestinationGPUTraceDocument]) {
-		NSLog(@"Supports GPU Trace doc");
-	}
-	else {
-		NSLog(@"WARNING: Doesn't support GPU Trace doc");
-		return;
-	}
+	// MTLCaptureManager *captureManager = [MTLCaptureManager sharedCaptureManager];
+	// if ([captureManager supportsDestination:MTLCaptureDestinationGPUTraceDocument]) {
+	// 	NSLog(@"Supports GPU Trace doc");
+	// }
+	// else {
+	// 	NSLog(@"WARNING: Doesn't support GPU Trace doc");
+	// 	return;
+	// }
 
 	MTLCaptureDescriptor *captureDescriptor = [[MTLCaptureDescriptor alloc] init];
 	captureDescriptor.captureObject = device;
@@ -53,7 +54,7 @@
 	@try {
 			// Start the capture
 			NSError *error;
-			[captureManager startCaptureWithDescriptor:captureDescriptor error:&error];
+			[[MTLCaptureManager sharedCaptureManager] startCaptureWithDescriptor:captureDescriptor error:&error];
 			[captureDescriptor dealloc];
 			NSLog(@"[MetalView] Started capture: %@", error);
 	} @catch (NSException *exception) {

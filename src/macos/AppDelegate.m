@@ -56,4 +56,7 @@
 	[super dealloc];
 }
 
+- (void)mouseMoved:(NSEvent *)event {
+}
+
 @end

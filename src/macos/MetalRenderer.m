@@ -1,6 +1,7 @@
 #import "MetalRenderer.h"
 #import "MetalView.h"
 #import "Vertex.h"
+#import "LinearAlg.h"
 
 @implementation MetalRenderer {
 	id<MTLDevice> _device;
@@ -8,6 +9,8 @@
 	id<MTLCommandQueue> _commandQueue;
 
 	vector_uint2 _viewportSize;
+
+	id<MTLBuffer> _quadVertexBuffer, _quadIndexBuffer;
 }
 
 - (instancetype)initWithMetalKitView:(MTKView *)mtkView {
@@ -36,6 +39,24 @@
 		}
 
 		_commandQueue = [_device newCommandQueue];
+
+		static const Vertex triangleVertices[] = {
+				// 2D positions,    RGBA colors
+				{ { -0.5,  -0.5 }, { 0, 1, 0, 1 } },
+				{ {  0.5,  -0.5 }, { 1, 0, 0, 1 } },
+				{ {  0.5,   0.5 }, { 0, 0, 1, 1 } },
+				{ { -0.5,   0.5 }, { 0, 0, 1, 1 } },
+		};
+
+		static const UInt32 triangleIndices[] = {
+			0, 1, 2, 2, 3, 0
+		};
+
+		_quadVertexBuffer = [_device newBufferWithBytes:triangleVertices length:sizeof(triangleVertices) options:MTLResourceStorageModeShared];
+		_quadVertexBuffer.label = @"VertexBuf";
+		_quadIndexBuffer  = [_device newBufferWithBytes:triangleIndices length:sizeof(triangleIndices) options:MTLResourceStorageModeShared];
+		_quadIndexBuffer.label = @"IndexBuf";
+
 		NSLog(@"Created MetalRenderer: %@", self);
 	}
 	return self;
@@ -43,13 +64,6 @@
 
 - (void)renderToView:(nonnull MTKView *)view {
 	NSLog(@"DrawInMTKView");
-
-	static const Vertex triangleVertices[] = {
-			// 2D positions,    RGBA colors
-			{ {  250,  -250 }, { 1, 0, 0, 1 } },
-			{ { -250,  -250 }, { 0, 1, 0, 1 } },
-			{ {    0,   250 }, { 0, 0, 1, 1 } },
-	};
 
 	// Create a new command buffer for each render pass to the current drawable.
 	id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
@@ -60,38 +74,44 @@
 
 	if(renderPassDescriptor != nil)
 	{
-			// Create a render command encoder.
-			id<MTLRenderCommandEncoder> renderEncoder =
-			[commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-			renderEncoder.label = @"MyRenderEncoder";
+		// Create a render command encoder.
+		id<MTLRenderCommandEncoder> renderEncoder =
+		[commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+		renderEncoder.label = @"MyRenderEncoder";
 
-			// Set the region of the drawable to draw into.
-			[renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0.0, 1.0 }];
-			
-			[renderEncoder setRenderPipelineState:_pipelineState];
+		[self renderQuad:renderEncoder x:100 y:100 sx:50 sy:50 angle:M_PI_2];
+		[self renderQuad:renderEncoder x:150 y:100 sx:50 sy:50 angle:M_PI_4];
+		[self renderQuad:renderEncoder x:200 y:100 sx:50 sy:50 angle:M_PI_2];
+		[self renderQuad:renderEncoder x:250 y:100 sx:50 sy:50 angle:M_PI_4];
 
-			// Pass in the parameter data.
-			[renderEncoder setVertexBytes:triangleVertices
-														 length:sizeof(triangleVertices)
-														atIndex:0];
-			
-			[renderEncoder setVertexBytes:&_viewportSize
-														 length:sizeof(_viewportSize)
-														atIndex:1];
-
-			// Draw the triangle.
-			[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
-												vertexStart:0
-												vertexCount:3];
-
-			[renderEncoder endEncoding];
-
-			// Schedule a present once the framebuffer is complete using the current drawable.
-			[commandBuffer presentDrawable:view.currentDrawable];
+		// Schedule a present once the framebuffer is complete using the current drawable.
+		[commandBuffer presentDrawable:view.currentDrawable];
+		[renderEncoder endEncoding];
 	}
 
 	// Finalize rendering here & push the command buffer to the GPU.
 	[commandBuffer commit];
+}
+
+- (void)renderQuad:(nonnull id<MTLRenderCommandEncoder>)renderEncoder x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle {
+	Uniforms u = {.model = modelMat(x, y, sx, sy, angle), .projection = orthoProjMat(0, 600, 0, 600, 0, 1)};
+	id<MTLBuffer> unifBuffer = [_device newBufferWithBytes:&u length:sizeof(Uniforms) options:MTLResourceStorageModeShared];
+	unifBuffer.label = @"UnifBuf";
+
+	[renderEncoder setRenderPipelineState:_pipelineState];
+	[renderEncoder setVertexBuffer:_quadVertexBuffer
+													offset:0
+												 atIndex:0];
+
+	[renderEncoder setVertexBuffer:unifBuffer
+													offset:0
+													atIndex:1];
+	
+	[renderEncoder setVertexBytes:&_viewportSize
+												 length:sizeof(_viewportSize)
+												atIndex:2];
+
+	[renderEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:6 indexType:MTLIndexTypeUInt32 indexBuffer:_quadIndexBuffer indexBufferOffset:0];
 }
 
 - (void)setViewportSize:(CGSize)size {

@@ -14,8 +14,12 @@
 	}
 	return self;
 }
+- (void)dealloc {
+	[super dealloc];
+	[_profiler stopCapture];
+}
 - (void)drawInMTKView:(MTKView *)view {
-	// [_profiler startCapture:@"" device:view.device];
+	// [_profiler startCapture:view.device];
 	[_renderer renderToView:view];
 	// [_profiler stopCapture];
 	// for(;;);

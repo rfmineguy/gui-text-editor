@@ -5,4 +5,5 @@
 - (nonnull instancetype)initWithMetalKitView:(nonnull MTKView *)mtkView;
 - (void)renderToView:(nonnull MTKView *)mtkView;
 - (void)setViewportSize:(CGSize)size;
+- (void)renderQuad:(nonnull id<MTLRenderCommandEncoder>)enc x:(float)x y:(float)y sx:(float)sx sy:(float)sy angle:(float)angle;
 @end
